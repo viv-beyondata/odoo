@@ -10,6 +10,7 @@ from random import randint
 
 from odoo import api, Command, fields, models, tools, SUPERUSER_ID, _, _lt
 from odoo.addons.rating.models import rating_data
+from odoo.addons.web_editor.controllers.main import handle_history_divergence
 from odoo.exceptions import UserError, ValidationError, AccessError
 from odoo.osv import expression
 from odoo.tools.misc import get_lang
@@ -2039,6 +2040,8 @@ class Task(models.Model):
         return tasks
 
     def write(self, vals):
+        if len(self) == 1:
+            handle_history_divergence(self, 'description', vals)
         portal_can_write = False
         if self.env.user.has_group('base.group_portal') and not self.env.su:
             # Check if all fields in vals are in SELF_WRITABLE_FIELDS
@@ -2162,6 +2165,8 @@ class Task(models.Model):
 
     @api.depends('parent_id.project_id', 'display_project_id')
     def _compute_project_id(self):
+        # Avoid recomputing kanban_state
+        self.env.remove_to_compute(self._fields['kanban_state'], self)
         for task in self:
             if task.parent_id:
                 task.project_id = task.display_project_id or task.parent_id.project_id
@@ -2242,6 +2247,7 @@ class Task(models.Model):
                     record_name=task.display_name,
                     email_layout_xmlid='mail.mail_notification_layout',
                     model_description=task_model_description,
+                    mail_auto_delete=False,
                 )
 
     def _message_auto_subscribe_followers(self, updated_values, default_subtype_ids):

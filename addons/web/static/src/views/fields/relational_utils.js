@@ -155,6 +155,11 @@ export class Many2XAutocomplete extends Component {
             onRecordSaved: (record) => {
                 return update([record.data]);
             },
+            onRecordDiscarded: () => {
+                if (!isToMany) {
+                    this.props.update(false);
+                }
+            },
             fieldString,
             onClose: () => {
                 const autoCompleteInput = this.autoCompleteContainer.el.querySelector("input");
@@ -246,9 +251,19 @@ export class Many2XAutocomplete extends Component {
                 action: async (params) => {
                     try {
                         await this.props.quickCreate(request, params);
-                    } catch {
-                        const context = this.getCreationContext(request);
-                        return this.openMany2X({ context });
+                    } catch (e) {
+                        if (e && e.name === "RPC_ERROR") {
+                            const context = this.getCreationContext(request);
+                            return this.openMany2X({ context });
+                        }
+                        // Compatibility with legacy code
+                        if (e && e.message && e.message.name === "RPC_ERROR") {
+                            // The event.preventDefault() is necessary because we still use the legacy
+                            e.event.preventDefault();
+                            const context = this.getCreationContext(request);
+                            return this.openMany2X({ context });
+                        }
+                        throw e;
                     }
                 },
             });
@@ -350,6 +365,7 @@ Many2XAutocomplete.defaultProps = {
 export function useOpenMany2XRecord({
     resModel,
     onRecordSaved,
+    onRecordDiscarded,
     fieldString,
     activeActions,
     isToMany,
@@ -392,6 +408,7 @@ export function useOpenMany2XRecord({
                 resModel: model,
                 viewId,
                 onRecordSaved,
+                onRecordDiscarded,
                 isToMany,
             },
             {

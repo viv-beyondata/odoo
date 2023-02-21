@@ -2,23 +2,6 @@
 /// This file contains all variables and mixins that are specific to the editor.
 ///
 
-// OVERRIDES FOR EDITOR WITH SNIPPETS
-body.editor_enable.editor_has_snippets {
-    padding-right: $o-we-sidebar-width !important;
-
-    #web_editor-top-edit .note-popover .popover {
-        right: $o-we-sidebar-width !important;
-    }
-
-    .modal:not(.o_technical_modal) {
-        top: 0 !important;
-        // set z-index so customize options visible on dialog.
-        z-index: $o-we-overlay-zindex - 1;
-        // just for fake backdrop effect
-        background-color: rgba(66, 66, 66, 0.4);
-    }
-}
-
 // Mobile fix for mass mailing
 @include media-breakpoint-down(lg) {
     body.editor_enable.editor_has_snippets {
@@ -2569,4 +2552,27 @@ we-button-group.o_grid {
 .o_we_drag_helper {
     padding: 0;
     border: $o-we-handle-border-width solid $o-we-accent;
+}
+
+// Highlight of the grid items padding.
+@keyframes highlightPadding {
+    from {
+        border: solid rgba($o-we-handles-accent-color, 0.2);
+        border-width: var(--grid-item-padding-y) var(--grid-item-padding-x);
+    }
+    to {
+        border: solid rgba($o-we-handles-accent-color, 0);
+        border-width: var(--grid-item-padding-y) var(--grid-item-padding-x);
+    }
+}
+
+.o_we_padding_highlight > .o_grid_item {
+    position: relative;
+
+    &::after {
+        content: "";
+        @include o-position-absolute(0, 0, 0, 0);
+        animation: highlightPadding 2s;
+        pointer-events: none;
+    }
 }
